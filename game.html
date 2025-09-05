@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rock Paper Scissors</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #1a1a1a, #333);
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      flex-direction: column;
+      text-align: center;
+      transition: background 0.5s, color 0.5s;
+    }
+    .title {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .move-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .move-button {
+      background-color: transparent;
+      border: 3px solid white;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      margin: 10px;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.2s, border-color 0.3s;
+    }
+    .move-button:hover {
+      transform: scale(1.1);
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    .move-icon {
+      height: 50px;
+    }
+    .result {
+      font-size: 26px;
+      font-weight: bold;
+      margin-top: 15px;
+      transition: 0.3s;
+    }
+    .js-moves {
+      margin-top: 10px;
+      font-size: 18px;
+    }
+    .js-score {
+      margin-top: 15px;
+      font-size: 18px;
+    }
+    .reset-button, .theme-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      border: 2px solid white;
+      background-color: transparent;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: background-color 0.2s, border-color 0.3s, color 0.3s;
+    }
+    .reset-button:hover, .theme-button:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    .highlight {
+      border-color: yellow !important;
+      box-shadow: 0 0 15px yellow;
+    }
+  </style>
+</head>
+<body>
+  <p class="title">Rock Paper Scissors</p>
+
+  <div class="move-container">
+    <button onclick="playGame('rock')" id="rock" class="move-button">
+      <img src="images/rock-emoji.png" alt="Rock" class="move-icon">
+    </button>
+    <button onclick="playGame('paper')" id="paper" class="move-button">
+      <img src="images/paper-emoji.png" alt="Paper" class="move-icon">
+    </button>
+    <button onclick="playGame('scissors')" id="scissors" class="move-button">
+      <img src="images/scissors-emoji.png" alt="Scissors" class="move-icon">
+    </button>
+  </div>
+
+  <p class="js-result result"></p>
+  <p class="js-moves"></p>
+  <p class="js-score"></p>
+
+  <button class="reset-button" onclick="resetGame()">Reset Score</button>
+  <button class="theme-button" onclick="changeTheme()">Change Theme</button>
+
+  <script>
+    let score = JSON.parse(localStorage.getItem('score')) || {
+      wins: 0,
+      losses: 0,
+      ties: 0,
+      rounds: 0
+    };
+
+    let themes = [
+      {
+        name: "Default",
+        background: "linear-gradient(135deg, #1a1a1a, #333)",
+        text: "white",
+        result: "#00ffcc",
+        highlight: "yellow"
+      },
+      {
+        name: "Neon",
+        background: "linear-gradient(135deg, #0f0f0f, #1a1a40)",
+        text: "#00ffcc",
+        result: "#ff33cc",
+        highlight: "#ffcc00"
+      },
+      {
+        name: "Sunset",
+        background: "linear-gradient(135deg, #ff9966, #ff5e62)",
+        text: "white",
+        result: "#ffe066",
+        highlight: "#ffe066"
+      },
+      {
+        name: "Cool Blue",
+        background: "linear-gradient(135deg, #2c3e50, #3498db)",
+        text: "#ecf0f1",
+        result: "#1abc9c",
+        highlight: "#1abc9c"
+      }
+    ];
+
+    let currentTheme = 0;
+
+    function applyTheme(theme) {
+      document.body.style.background = theme.background;
+      document.body.style.color = theme.text;
+      document.querySelectorAll(".move-button, .reset-button, .theme-button").forEach(btn => {
+        btn.style.borderColor = theme.text;
+        btn.style.color = theme.text;
+      });
+      document.querySelector(".result").style.color = theme.result;
+      document.querySelectorAll(".highlight").forEach(btn => {
+        btn.style.borderColor = theme.highlight;
+        btn.style.boxShadow = `0 0 15px ${theme.highlight}`;
+      });
+    }
+
+    function changeTheme() {
+      currentTheme = (currentTheme + 1) % themes.length;
+      applyTheme(themes[currentTheme]);
+    }
+
+    applyTheme(themes[currentTheme]);
+    updateScoreElement();
+
+    function playGame(playerMove) {
+      const computerMove = pickComputerMove();
+      let result = '';
+
+      if (playerMove === computerMove) {
+        result = "It's a tie!";
+        score.ties++;
+      } else if (
+        (playerMove === 'rock' && computerMove === 'scissors') ||
+        (playerMove === 'paper' && computerMove === 'rock') ||
+        (playerMove === 'scissors' && computerMove === 'paper')
+      ) {
+        result = "You win!";
+        score.wins++;
+      } else {
+        result = "You lose!";
+        score.losses++;
+      }
+
+      score.rounds++;
+      localStorage.setItem('score', JSON.stringify(score));
+
+      updateScoreElement();
+      showMoves(playerMove, computerMove, result);
+    }
+
+    function showMoves(playerMove, computerMove, result) {
+      document.querySelector('.js-result').textContent = result;
+      document.querySelector('.js-moves').innerHTML = `
+        You:
+        <img src="images/${playerMove}-emoji.png" alt="${playerMove}" class="move-icon">
+        &nbsp; VS &nbsp;
+        Computer:
+        <img src="images/${computerMove}-emoji.png" alt="${computerMove}" class="move-icon">
+      `;
+
+      // highlight winner
+      document.querySelectorAll('.move-button').forEach(btn => btn.classList.remove('highlight'));
+      if (result === "You win!") {
+        document.getElementById(playerMove).classList.add('highlight');
+      } else if (result === "You lose!") {
+        document.getElementById(computerMove).classList.add('highlight');
+      }
+      applyTheme(themes[currentTheme]); // reapply theme highlight color
+    }
+
+    function updateScoreElement() {
+      document.querySelector('.js-score').textContent =
+        `Wins: ${score.wins}, Losses: ${score.losses}, Ties: ${score.ties}, Rounds: ${score.rounds}`;
+    }
+
+    function resetGame() {
+      score = { wins: 0, losses: 0, ties: 0, rounds: 0 };
+      localStorage.removeItem('score');
+      updateScoreElement();
+      document.querySelector('.js-result').textContent = '';
+      document.querySelector('.js-moves').textContent = '';
+      document.querySelectorAll('.move-button').forEach(btn => btn.classList.remove('highlight'));
+    }
+
+    function pickComputerMove() {
+      const moves = ['rock', 'paper', 'scissors'];
+      return moves[Math.floor(Math.random() * moves.length)];
+    }
+
+    // Keyboard support: R, P, S
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'r') playGame('rock');
+      if (e.key.toLowerCase() === 'p') playGame('paper');
+      if (e.key.toLowerCase() === 's') playGame('scissors');
+    });
+  </script>
+</body>
+</html>
